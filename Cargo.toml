@@ -1,6 +1,9 @@
 [package]
 authors = ["Josh Leverette <coder543@gmail.com>"]
 name = "sdl2_mt"
+description = "Multithreaded wrapper around SDL2"
+license = "MIT"
 version = "0.1.0"
+
 [dependencies]
 sdl2 = "0.30.0"
