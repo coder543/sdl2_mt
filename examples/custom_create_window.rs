@@ -39,12 +39,17 @@ fn main() {
         canvas.present();
     })).unwrap();
 
+    // create a channel we can use to easily break the loop
+    // from inside the closure.
     let (tx, rx) = mpsc::channel();
     while rx.try_recv().is_err() {
         let tx = tx.clone();
+
+        // handle any new UI events that have happened
         sdlh.handle_ui_events(Box::new(move |_sdl, windows, event| {
             match event {
                 &Quit { .. } | &KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    // send a message to rx to cancel the loop
                     tx.send(()).unwrap();
                 },
 
@@ -78,5 +83,7 @@ fn main() {
         sleep(Duration::from_millis(15));
     }
 
+    // not strictly necessary, since when the main thread exits in Rust the entire program is killed.
+    // the exit() function has the effect of terminating the SDL2 UI thread.
     sdlh.exit().unwrap();
 }
