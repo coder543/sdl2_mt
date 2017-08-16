@@ -103,15 +103,15 @@ fn map_ute<T>(_: T) -> UiThreadExited {
 }
 
 impl Sdl2Mt {
-    // A quick, simple way to create a window. Just give it a name, width, and height.
-    //
-    // This function executes synchronously. It will block until the
-    // window_creator function has completed.
-    //
-    // # Panics
-    //
-    // This function will panic if the Window or the Canvas `build()` functions
-    // do not succeed.
+    /// A quick, simple way to create a window. Just give it a name, width, and height.
+    ///
+    /// This function executes synchronously. It will block until the
+    /// window_creator function has completed.
+    ///
+    /// # Panics
+    ///
+    /// This function will panic if the Window or the Canvas `build()` functions
+    /// do not succeed.
     pub fn create_simple_window<IntoString: Into<String>>(&self, name: IntoString, width: u32, height: u32) -> Result<u32, UiThreadExited> {
         let name = name.into();
         self.create_window(Box::new(move |_sdl, video_subsystem| {
@@ -132,39 +132,39 @@ impl Sdl2Mt {
         })).map(|id| id.unwrap())
     }
 
-    // Executes a window_creator function that accepts &mut VideoSubsystem
-    // and returns an Option<Window>. If Some(window), it will be
-    // added to a HashMap, hashing on the window's ID, which will
-    // then be returned here. If None, None will be returned here.
-    //
-    // This function executes synchronously. It will block until the
-    // window_creator function has completed.
+    /// Executes a window_creator function that accepts &mut VideoSubsystem
+    /// and returns an Option<Window>. If Some(window), it will be
+    /// added to a HashMap, hashing on the window's ID, which will
+    /// then be returned here. If None, None will be returned here.
+    ///
+    /// This function executes synchronously. It will block until the
+    /// window_creator function has completed.
     pub fn create_window(&self, window_creator: Box<SdlCreateWindow>) -> Result<Option<u32>, UiThreadExited> {
         let (tx, rx) = mpsc::channel();
         self.0.send(CreateWindow(window_creator, tx)).map_err(map_ute)?;
         rx.recv().map_err(map_ute)
     }
 
-    /// Executes a lambda function on the UI thread
-    /// Either succeeds or the channel is closed and it returns a `SendError`
-    //
-    // This function executes asynchronously. It will *not* block the calling thread.
+    //// Executes a lambda function on the UI thread
+    //// Either succeeds or the channel is closed and it returns a `SendError`
+    ///
+    /// This function executes asynchronously. It will *not* block the calling thread.
     pub fn run_on_ui_thread(&self, lambda: Box<SdlLambda>) -> Result<(), UiThreadExited> {
         self.0.send(Lambda(lambda)).map_err(map_ute)
     }
 
-    // Executes an event_handler function.
-    //
-    // This function executes synchronously. It will block until the
-    // event_handler function has completed.
+    /// Executes an event_handler function.
+    ///
+    /// This function executes synchronously. It will block until the
+    /// event_handler function has completed.
     pub fn handle_ui_events(&self, event_handler: Box<SdlHandleEvent>) -> Result<(), UiThreadExited> {
         let (tx, rx) = mpsc::channel();
         self.0.send(HandleEvent(event_handler, tx)).map_err(map_ute)?;
         rx.recv().map_err(map_ute)
     }
 
-    // Terminates the UI thread. Not strictly necessary if the program will exit anyways,
-    // such as when the main program thread returns from main.
+    /// Terminates the UI thread. Not strictly necessary if the program will exit anyways,
+    /// such as when the main program thread returns from main.
     pub fn exit(self) -> Result<(), UiThreadExited> {
         self.0.send(Exit).map_err(map_ute)
     }
