@@ -32,7 +32,10 @@ fn sdl_handler(rx: mpsc::Receiver<Sdl2Message>) {
     let mut unhandled_events = LinkedList::new(); // really, we need to drop old events at some point
     for message in rx {
         match message {
+            // Lambda is used for simple, asynchronous blocks of code that need to be run on
+            // the UI thread. This does not block the calling thread, so no tx sync is used.
             Lambda(mut lambda) => lambda(&mut sdl_context, &mut windows),
+
             CreateWindow(mut create_window, tx) => {
                 let window_id;
                 if let Some(canvas) = create_window(&mut sdl_context, &mut video) {
@@ -52,6 +55,7 @@ fn sdl_handler(rx: mpsc::Receiver<Sdl2Message>) {
                 // for now, sdl2_mt will do nothing.
                 let _ = tx.send(window_id);
             },
+
             HandleEvent(mut handle_event, tx) => {
                 // len() should be O(1) according to docs, unlike most linked lists
                 let len = unhandled_events.len() as isize;
@@ -84,7 +88,8 @@ fn sdl_handler(rx: mpsc::Receiver<Sdl2Message>) {
                 // Synchronize with calling thread to prevent unbounded HandleEvents messages queueing up
                 // Same logic as above regarding errors
                 let _ = tx.send(()); 
-            }
+            },
+
             Exit => break
         }
     }
