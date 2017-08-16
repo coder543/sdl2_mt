@@ -58,8 +58,12 @@ fn main() {
                     canvas.present();
                 },
                 
+                // false means "this event handler function did not handle this event"
+                // in a multithreaded application, you might have an event handler per window.
+                // this makes it easier to juggle events between handlers.
                 _ => return false
             }
+            // true means we handled this event
             true
         })).unwrap();
 
