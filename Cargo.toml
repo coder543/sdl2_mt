@@ -2,5 +2,7 @@
 authors = ["Josh Leverette <coder543@gmail.com>"]
 name = "sdl2_mt"
 version = "0.1.0"
+
 [dependencies]
+lazy_static = "0.2.9"
 sdl2 = "0.30.0"

@@ -1,9 +1,11 @@
+#[macro_use]
+extern crate lazy_static;
 extern crate sdl2;
 use sdl2::*;
 use sdl2::event::Event;
 
 use std::collections::{HashMap, LinkedList};
-use std::sync::mpsc;
+use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 
 type SdlLambda = FnMut(&mut Sdl, &mut HashMap<u32, video::Window>) + Send;
@@ -122,8 +124,36 @@ impl Sdl2Mt {
     }
 }
 
+lazy_static! {
+    static ref MT_HANDLE: Arc<Mutex<Sdl2Mt>> = {
+        let (tx, rx) = mpsc::channel();
+        thread::spawn(move || sdl_handler(rx));
+        let handle = Sdl2Mt(tx);
+        Arc::new(Mutex::new(handle))
+    };
+}
+
 pub fn init() -> Sdl2Mt {
-    let (tx, rx) = mpsc::channel();
-    thread::spawn(move || sdl_handler(rx));
-    Sdl2Mt(tx)
+    let handle = (*MT_HANDLE).clone();
+    let locked = handle.lock().unwrap();
+    let new_handle = locked.clone();
+    new_handle
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::thread::sleep;
+    use std::time::Duration;
+
+    #[test]
+    fn double_init() {
+        let a = init();
+        let b = init();
+        sleep(Duration::from_millis(250));
+        a.run_on_ui_thread(Box::new(|_, _| {})).unwrap();
+        sleep(Duration::from_millis(250));
+        b.run_on_ui_thread(Box::new(|_, _| {})).unwrap();
+        sleep(Duration::from_millis(250));
+    }
 }
